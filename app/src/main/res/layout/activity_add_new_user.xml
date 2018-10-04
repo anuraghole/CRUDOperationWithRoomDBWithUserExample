@@ -20,7 +20,7 @@
             android:layout_height="wrap_content"
             android:fontFamily="sans-serif-light"
             android:hint="Name"
-            android:inputType="textAutoComplete"
+            android:inputType="textCapWords"
             android:padding="@dimen/padding"
             android:textSize="@dimen/text_size" />
     </android.support.design.widget.TextInputLayout>
