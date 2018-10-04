@@ -71,6 +71,11 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
        deleteUpdateUser.updateUser(user);
 
     }
+    public void setFilter(List<User> newList){
+        userList=new ArrayList<>();
+        userList.addAll(newList);
+        notifyDataSetChanged();
+    }
 
     private void deleteUser(User user, int position) {
         userList.remove(user);

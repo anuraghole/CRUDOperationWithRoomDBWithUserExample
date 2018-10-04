@@ -12,64 +12,71 @@ import android.widget.EditText;
 import com.example.anuraghole.userwithroomdbdemo.R;
 import com.example.anuraghole.userwithroomdbdemo.models.User;
 
-public class AddNewUserActivity extends AppCompatActivity {
+public class AddNewUserActivity extends AppCompatActivity implements View.OnClickListener {
     public static final String EXTRA_REPLY = "com.example.anuraghole.userwithroomdbdemo.insert";
     public static final String EXTRA_UPDATE = "com.example.anuraghole.userwithroomdbdemo.update";
-
     private EditText name, email, mobile;
     TextInputLayout tilName, tilEmail, tilMobile;
-    private Button save,update;
+    private Button save, update;
     User updateUser;
     int position;
+    static int actionFlag;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_new_user);
         initViews();
+        actionFlag = getIntent().getIntExtra(MainActivity.ACTION_FLAG, 0);
+        if (actionFlag == MainActivity.USER_INSERT_ACTIVITY_REQUEST_CODE) {
+            prepareForInsert();
+        }
+        if (actionFlag == MainActivity.USER_UPDATE_ACTIVITY_REQUEST_CODE) {
+            prepareForUpdate();
+        }
+    }
 
-         updateUser=getIntent().getParcelableExtra(EXTRA_UPDATE);
+    private void prepareForInsert() {
+        showHideSaveUpdateButton(save);
+    }
+
+    private void prepareForUpdate() {
+        updateUser = getIntent().getParcelableExtra(EXTRA_UPDATE);
         if (updateUser != null) {
-            position=getIntent().getIntExtra("pos",0);
             name.setText(updateUser.getName());
             email.setText(updateUser.getEmail());
             mobile.setText(updateUser.getMobile());
+            showHideSaveUpdateButton(update);
         }
-        update.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent updateIntent=new Intent();
-                if (validateUser()){
-                    updateUser.setName(name.getText().toString());
-                    updateUser.setEmail(email.getText().toString());
-                    updateUser.setMobile(mobile.getText().toString());
-                    updateIntent.putExtra(EXTRA_UPDATE,updateUser);
-                    setResult(RESULT_OK,updateIntent);
-                }else{
-                    setResult(RESULT_CANCELED, updateIntent);
-                }
-                finish();
-            }
-        });
-        save.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent replyIntent = new Intent();
-                if (validateUser()){
-                    User user = new User();
-                    user.setName(name.getText().toString());
-                    user.setEmail(email.getText().toString());
-                    user.setMobile(mobile.getText().toString());
-                    replyIntent.putExtra(EXTRA_REPLY, user);
-                    setResult(RESULT_OK, replyIntent);
-                }
-                else {
-                    setResult(RESULT_CANCELED, replyIntent);
-                }
-                finish();
-            }
-        });
+    }
 
+    private void actionUpdate() {
+        Intent replyUpdateIntent = new Intent();
+        if (validateUser()) {
+            updateUser.setName(name.getText().toString());
+            updateUser.setEmail(email.getText().toString());
+            updateUser.setMobile(mobile.getText().toString());
+            replyUpdateIntent.putExtra(EXTRA_UPDATE, updateUser);
+            setResult(RESULT_OK, replyUpdateIntent);
+        } else {
+            setResult(RESULT_CANCELED, replyUpdateIntent);
+        }
+        finish();
+    }
+
+    private void actionInsert() {
+        Intent replyInsertIntent = new Intent();
+        if (validateUser()) {
+            User user = new User();
+            user.setName(name.getText().toString());
+            user.setEmail(email.getText().toString());
+            user.setMobile(mobile.getText().toString());
+            replyInsertIntent.putExtra(EXTRA_REPLY, user);
+            setResult(RESULT_OK, replyInsertIntent);
+        } else {
+            setResult(RESULT_CANCELED, replyInsertIntent);
+        }
+        finish();
     }
 
     private boolean validateUser() {
@@ -98,6 +105,33 @@ public class AddNewUserActivity extends AppCompatActivity {
         tilEmail = findViewById(R.id.tilEmail);
 
         save = findViewById(R.id.button_save);
+        save.setVisibility(View.GONE);
         update = findViewById(R.id.button_update);
+        update.setVisibility(View.GONE);
+
+        save.setOnClickListener(this);
+        update.setOnClickListener(this);
+    }
+
+    private void showHideSaveUpdateButton(Button button) {
+        if (button.getVisibility() == View.VISIBLE) {
+            button.setVisibility(View.GONE);
+        } else {
+            button.setVisibility(View.VISIBLE);
+        }
+
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.button_save:
+                actionInsert();
+                break;
+            case R.id.button_update:
+                actionUpdate();
+                break;
+
+        }
     }
 }

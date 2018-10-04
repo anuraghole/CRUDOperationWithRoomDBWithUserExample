@@ -6,9 +6,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -20,12 +22,15 @@ import com.example.anuraghole.userwithroomdbdemo.R;
 import com.example.anuraghole.userwithroomdbdemo.ViewModels.UserViewModel;
 import com.example.anuraghole.userwithroomdbdemo.adapters.UserAdapter;
 import com.example.anuraghole.userwithroomdbdemo.models.User;
+import com.example.anuraghole.userwithroomdbdemo.repositories.UserRepository;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements UserAdapter.DeleteUpdateUser {
-    public static final int NEW_USER_ACTIVITY_REQUEST_CODE = 1;
-    public static final int NEW_USER_UPDATE_ACTIVITY_REQUEST_CODE = 2;
+public class MainActivity extends AppCompatActivity implements UserAdapter.DeleteUpdateUser,SearchView.OnQueryTextListener {
+    public static final int USER_INSERT_ACTIVITY_REQUEST_CODE = 1;
+    public static final int USER_UPDATE_ACTIVITY_REQUEST_CODE = 2;
+    public static final String ACTION_FLAG="actionFlag";
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private UserAdapter adapter;
@@ -51,7 +56,10 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.Delet
         userViewModel.getAllUser().observe(this, new Observer<List<User>>() {
             @Override
             public void onChanged(@Nullable List<User> users) {
-                adapter.setUser(users);
+                if (users!=null){
+                    userList=users;
+                    adapter.setUser(users);
+                }
             }
         });
         fab.setOnClickListener(new View.OnClickListener() {
@@ -60,7 +68,8 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.Delet
 //                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
 //                        .setAction("Action", null).show();
                 Intent intent = new Intent(MainActivity.this, AddNewUserActivity.class);
-                startActivityForResult(intent, NEW_USER_ACTIVITY_REQUEST_CODE);
+                intent.putExtra(ACTION_FLAG,USER_INSERT_ACTIVITY_REQUEST_CODE);
+                startActivityForResult(intent, USER_INSERT_ACTIVITY_REQUEST_CODE);
 
             }
         });
@@ -76,7 +85,31 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.Delet
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
+        getMenuInflater().inflate(R.menu.menu_search, menu);
+        MenuItem menuItem = menu.findItem(R.id.action_search);
+        SearchView searchView = (SearchView) MenuItemCompat.getActionView(menuItem);
+        searchView.setQueryHint("Search by Name/Mobile/Email");
+        searchView.setOnQueryTextListener(this);
+        return true;
+
+    }
+    @Override
+    public boolean onQueryTextSubmit(String query) {
+        return false;
+    }
+
+    @Override
+    public boolean onQueryTextChange(String searchText) {
+        searchText = searchText.toLowerCase();
+        ArrayList<User> filterList = new ArrayList<>();
+        for (User user : userList) {
+            String name = user.getName().toLowerCase();
+            String email = user.getEmail().toLowerCase();
+            String mobile = user.getMobile();
+            if (name.contains(searchText) || email.contains(searchText)||mobile.contains(searchText))
+                filterList.add(user);
+        }
+        adapter.setFilter(filterList);
         return true;
     }
 
@@ -106,14 +139,14 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.Delet
        // userViewModel.updateUser(user);
         Intent intent = new Intent(MainActivity.this, AddNewUserActivity.class);
         intent.putExtra(AddNewUserActivity.EXTRA_UPDATE,user);
-        intent.putExtra("flag",2);
-        startActivityForResult(intent, NEW_USER_UPDATE_ACTIVITY_REQUEST_CODE);
+        intent.putExtra(ACTION_FLAG,USER_UPDATE_ACTIVITY_REQUEST_CODE);
+        startActivityForResult(intent, USER_UPDATE_ACTIVITY_REQUEST_CODE);
 
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == NEW_USER_ACTIVITY_REQUEST_CODE && resultCode == RESULT_OK) {
+        if (requestCode == USER_INSERT_ACTIVITY_REQUEST_CODE && resultCode == RESULT_OK) {
             User user = null;
             if (data != null) {
                 user = data.getParcelableExtra(AddNewUserActivity.EXTRA_REPLY);
@@ -123,7 +156,7 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.Delet
                 Toast.makeText(getApplicationContext(), "Not Saved", Toast.LENGTH_LONG).show();
             }
         }
-        if (requestCode == NEW_USER_UPDATE_ACTIVITY_REQUEST_CODE && resultCode == RESULT_OK){
+        if (requestCode == USER_UPDATE_ACTIVITY_REQUEST_CODE && resultCode == RESULT_OK){
             User user = null;
             if (data != null) {
                 user = data.getParcelableExtra(AddNewUserActivity.EXTRA_UPDATE);
@@ -135,5 +168,6 @@ public class MainActivity extends AppCompatActivity implements UserAdapter.Delet
         }
 
     }
+
 
 }
